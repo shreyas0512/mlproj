@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Frame Capture</title>
+</head>
+
+<body>
+    <h1>Video Frame Capture</h1>
+    <video id="videoPlayer" width="640" height="360" controls loop>
+        <source src="static/video/test2.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
+
+    <canvas id="canvas" width="640" height="360"></canvas>
+
+    <script>
+        const video = document.getElementById('videoPlayer');
+        const canvas = document.getElementById('canvas');
+        const context = canvas.getContext('2d');
+
+        video.addEventListener('loadeddata', function () {
+            // Start capturing frames when video data is loaded
+            captureFrames();
+        });
+
+        function captureFrames() {
+            // Set the interval for frame capturing (e.g., every 500 milliseconds)
+            setInterval(function () {
+                // Draw the current frame onto the canvas
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+                // Get the base64-encoded image data of the captured frame
+                const frameImageData = canvas.toDataURL('image/jpeg').split(',')[1];
+
+                // Send the base64-encoded image data to the server
+                sendFrameData(frameImageData);
+            }, 500);
+        }
+
+        function sendFrameData(frameImageData) {
+            // Send the frame data to the server using an XMLHttpRequest or Fetch API
+            // Adjust the URL and method according to your server-side code
+            fetch('/upload_frame', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ frame_data: frameImageData }),
+            })
+                .then(response => response.json())
+                .then(data => console.log(data))
+                .catch(error => console.error('Error:', error));
+        }
+    </script>
+</body>
+
+</html>
