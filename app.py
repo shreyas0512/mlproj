@@ -5,9 +5,11 @@ from os import path, walk
 import cv2
 import base64
 from collections import deque
+import matplotlib.pyplot as plt
 
 app = Flask(__name__)
-
+#config to update when template changes
+app.config['TEMPLATES_AUTO_RELOAD'] = True
 # Load the model
 model_path = './mymodel'
 mode = tf.keras.models.load_model(model_path)
@@ -28,18 +30,20 @@ def upload_frame():
     try:
         data = request.get_json()
         frame_image_data = data.get('frame_data')
-
+        
         # Convert base64 frame data to a NumPy array
         frame_data = base64.b64decode(frame_image_data)
         nparr = np.frombuffer(frame_data, np.uint8)
         frame = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-
+        np.save('frame.npy', frame)
+        plt.imshow(frame)
         # Resize the frame to fixed dimensions
         resized_frame = cv2.resize(frame, (224, 224))
 
         # Normalize the resized frame
         normalized_frame = resized_frame / 255
         print(normalized_frame.shape)
+        #plt.imshow(normalized_frame)
 
         # Add the frame to the deque
         frames_deque.append(normalized_frame)
@@ -63,13 +67,13 @@ def predict_video(frames_list):
     # Passing the pre-processed frames to the model and get the predicted probabilities.
     predicted_labels_probabilities = mode.predict(np.expand_dims(frames_list, axis=0))[0]
 
-    # Get the index of the class with the highest probability.
+    # # Get the index of the class with the highest probability.
     predicted_label = np.argmax(predicted_labels_probabilities)
 
-    # Get the class name using the retrieved index.
+    # # Get the class name using the retrieved index.
     predicted_class_name = CLASSES_LIST[predicted_label]
 
-    # Display the predicted class along with the prediction confidence.
+    # # Display the predicted class along with the prediction confidence.
     print(f'Predicted: {predicted_class_name}\nConfidence: {predicted_labels_probabilities[predicted_label]}')
 
 if __name__ == '__main__':
